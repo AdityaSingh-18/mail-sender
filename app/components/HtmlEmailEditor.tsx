@@ -66,11 +66,12 @@ export const HtmlEmailEditor = ({
   }, [value]);
 
   return (
-    <div className="grid min-w-0 gap-4 p-4 md:px-6 lg:grid-cols-2">
-      <section className="min-w-0 overflow-hidden rounded-xl border border-slate-200">
-        <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50/70 px-3 py-2">
-          <CodeXml size={17} className="text-slate-500" />
-          <h4 className="text-sm font-semibold text-slate-700">
+    <div className="grid min-w-0 gap-4 p-4 md:px-6 lg:grid-cols-2 dark:text-slate-100">
+      <section className="min-w-0 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50/70 px-3 py-2 
+          dark:border-slate-700 dark:bg-slate-800/70">
+          <CodeXml size={17} className="text-slate-500 dark:text-slate-400" />
+          <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-100">
             HTML Source
           </h4>
         </div>
@@ -81,22 +82,24 @@ export const HtmlEmailEditor = ({
           onChange={(event) => onChange(event.target.value)}
           spellCheck={false}
           placeholder="Write your HTML email..."
-          className="min-h-[150px] w-full sidebar-scroll resize-y p-3 font-mono text-xs leading-6 text-slate-700 outline-none placeholder:text-slate-300"
+          className="min-h-[150px] w-full sidebar-scroll resize-y bg-white p-3 font-mono text-xs leading-6 
+            text-slate-700 outline-none placeholder:text-slate-300 dark:bg-slate-900 dark:text-slate-100 
+            dark:placeholder:text-slate-500"
         />
       </section>
 
-      <section className="min-w-0 overflow-hidden rounded-xl border border-slate-200">
-        <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50/70 px-3 py-2">
-          <Eye size={17} className="text-slate-500" />
-          <h4 className="text-sm font-semibold text-slate-700">
+      <section className="min-w-0 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50/70 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/70">
+          <Eye size={17} className="text-slate-500 dark:text-slate-400" />
+          <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-100">
             Live Preview
           </h4>
-          <span className="ml-auto rounded-full bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-600">
+          <span className="ml-auto rounded-full bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-600 dark:bg-blue-500/15 dark:text-blue-300">
             Live
           </span>
         </div>
 
-        <div className="bg-slate-100 p-2">
+        <div className="bg-slate-100 p-2 dark:bg-slate-950">
           <iframe
             title="HTML email preview"
             sandbox=""
