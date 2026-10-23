@@ -35,10 +35,16 @@ const steps = [
 
 type EmailWorkspaceProps = {
   selectedEmailType: EmailTypeId;
+  senderName: string;
+  senderEmail: string;
+  onOpenSettings: () => void;
 };
 
 export const EmailWorkspace = ({
   selectedEmailType,
+  senderName,
+  senderEmail,
+  onOpenSettings,
 }: EmailWorkspaceProps) => {
   const [recipient, setRecipient] = useState("");
   const [subject, setSubject] = useState(emailTemplates.text.subject);
@@ -55,7 +61,7 @@ export const EmailWorkspace = ({
   const EmailIcon = selectedType.icon;
   
   return (
-    <section className="flex-1 p-4 md:px-6">
+    <section className="flex-1 p-3 md:px-6">
       <div className="mb-3">
         <h2 className="text-2xl md:text-3xl text-slate-700 font-semibold tracking-tight">
           Send Mails
@@ -82,9 +88,33 @@ export const EmailWorkspace = ({
             </div>
           </div>
           <div className="flex items-center border border-slate-100 px-4 md:px-6">
+            <label className="w-[80px] shrink-0 py-2 text-sm text-slate-500">
+              From
+            </label>
+
+            <div className="py-2">
+              {senderEmail.trim() ? (
+                <p className="truncate text-sm text-slate-700">
+                  {senderName.trim() || senderEmail.trim()}{" "}
+                  <span className="text-slate-400">
+                    &lt;{senderEmail.trim()}&gt;
+                  </span>
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onOpenSettings}
+                  className="text-sm font-semibold text-blue-500 hover:text-blue-600"
+                >
+                  Configure sender
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center border border-slate-100 px-4 md:px-6">
             <label
               htmlFor="recipient"
-              className="w-[80px] text-sm text-slate-500 py-2"
+              className="w-[80px] shrink-0 text-sm text-slate-500 py-2"
             >
               To
             </label>
@@ -102,7 +132,7 @@ export const EmailWorkspace = ({
           <div className="flex items-center border border-slate-100 px-4 md:px-6">
             <label
               htmlFor="subject"
-              className="w-[80px] text-sm text-slate-500 py-2"
+              className="w-[80px] shrink-0 text-sm text-slate-500 py-2"
             >
               Subject
             </label>
@@ -128,9 +158,8 @@ export const EmailWorkspace = ({
                 ? "Edit your HTML email..."
                 : "Write your email..."
             }
-            className={`min-h-[260px] w-full resize-none p-4 md:px-6 text-[15px] leading-6 text-slate-700 outline-none placeholder:text-slate-300 ${
-              selectedEmailType === "html" ? "font-mono" : ""
-            }`}
+            className={`min-h-60 w-full resize-none p-4 md:px-6 text-[15px] leading-6 text-slate-700 outline-none 
+              placeholder:text-slate-300 sidebar-scroll ${selectedEmailType === "html" ? "font-mono" : ""}`}
           />
           <div className="flex items-center border-t border-slate-100 p-4 md:px-6">
             <button

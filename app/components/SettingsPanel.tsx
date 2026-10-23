@@ -13,15 +13,32 @@ import {
   UserRound,
 } from "lucide-react";
 
-export const SettingsPanel = () => {
-  const [senderName, setSenderName] = useState("");
-  const [senderEmail, setSenderEmail] = useState("");
-  const [appPassword, setAppPassword] = useState("");
+type SettingsPanelProps = {
+  senderName: string;
+  onSenderNameChange: (value: string) => void;
+  senderEmail: string;
+  onSenderEmailChange: (value: string) => void;
+  appPassword: string;
+  onAppPasswordChange: (value: string) => void;
+  onSaveSettings: () => boolean;
+};
+
+export const SettingsPanel = ({
+  senderName,
+  onSenderNameChange,
+  senderEmail,
+  onSenderEmailChange,
+  appPassword,
+  onAppPasswordChange,
+  onSaveSettings,
+}: SettingsPanelProps) => {
   const [showAppPassword, setShowAppPassword] = useState(false);
   const [validationError, setValidationError] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
 
   const clearFeedback = () => {
     setValidationError("");
+    setStatusMessage("");
   };
 
   const validateSettings = () => {
@@ -54,9 +71,28 @@ export const SettingsPanel = () => {
     event.preventDefault();
     clearFeedback();
 
-    if (!validateSettings()) {
+    if (!senderName.trim()) {
+      setValidationError("Please enter a sender name.");
       return;
     }
+
+    if (!senderEmail.trim()) {
+      setValidationError("Please enter a sender email address.");
+      return;
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(senderEmail.trim())) {
+      setValidationError("Please enter a valid sender email address.");
+      return;
+    }
+
+    if (!onSaveSettings()) {
+      setStatusMessage("Unable to save settings in this browser.");
+      return;
+    }
+
+    setStatusMessage("Sender settings saved successfully.");
   };
 
   const handleTestConnection = () => {
@@ -77,7 +113,7 @@ export const SettingsPanel = () => {
     .join("") || "YN";
 
   return (
-    <section className="flex-1 p-4 md:px-6">
+    <section className="flex-1 p-3 md:px-6">
       <div className="mb-3">
         <h2 className="text-2xl md:text-3xl text-slate-700 font-semibold tracking-tight">
           Settings
@@ -127,7 +163,7 @@ export const SettingsPanel = () => {
                   autoComplete="name"
                   value={senderName}
                   onChange={(event) => {
-                    setSenderName(event.target.value);
+                    onSenderNameChange(event.target.value);
                     clearFeedback();
                   }}
                   placeholder="Your name or business name"
@@ -154,7 +190,7 @@ export const SettingsPanel = () => {
                   autoComplete="email"
                   value={senderEmail}
                   onChange={(event) => {
-                    setSenderEmail(event.target.value);
+                    onSenderEmailChange(event.target.value);
                     clearFeedback();
                   }}
                   placeholder="your-email@gmail.com"
@@ -181,7 +217,7 @@ export const SettingsPanel = () => {
                   autoComplete="new-password"
                   value={appPassword}
                   onChange={(event) => {
-                    setAppPassword(event.target.value);
+                    onAppPasswordChange(event.target.value);
                     clearFeedback();
                   }}
                   placeholder="Enter your App Password"
@@ -214,6 +250,15 @@ export const SettingsPanel = () => {
                 <AlertCircle size={17} className="mt-0.5 shrink-0" />
                 <p>{validationError}</p>
               </div>
+            )}
+
+            {statusMessage && (
+              <p
+                role="status"
+                className="rounded-lg border border-blue-100 bg-blue-50 p-2.5 text-sm text-blue-800"
+              >
+                {statusMessage}
+              </p>
             )}
 
             <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
