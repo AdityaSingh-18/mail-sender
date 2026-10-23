@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { emailTypes, type EmailTypeId } from "@/data/email-types";
-import { emailTemplates } from "@/data/email-templates";
 
 import { 
   Paperclip,
@@ -37,25 +36,119 @@ type EmailWorkspaceProps = {
   selectedEmailType: EmailTypeId;
   senderName: string;
   senderEmail: string;
+  appPassword: string;
   onOpenSettings: () => void;
+  subject: string;
+  onSubjectChange: (value: string) => void;
+  message: string;
+  onMessageChange: (value: string) => void;
+};
+
+type SendFeedback = {
+  type: "success" | "error";
+  message: string;
+  showSettings?: boolean;
 };
 
 export const EmailWorkspace = ({
   selectedEmailType,
   senderName,
   senderEmail,
+  appPassword,
   onOpenSettings,
+  subject,
+  onSubjectChange,
+  message,
+  onMessageChange,
 }: EmailWorkspaceProps) => {
   const [recipient, setRecipient] = useState("");
-  const [subject, setSubject] = useState(emailTemplates.text.subject);
-  const [message, setMessage] = useState(emailTemplates.text.body);
+  const [isSending, setIsSending] = useState(false);
+  const [sendFeedback, setSendFeedback] = useState<SendFeedback | null>(null);
 
-  useEffect(() => {
-    const template = emailTemplates[selectedEmailType];
+  const handleSend = async () => {
+    setSendFeedback(null);
 
-    setSubject(template.subject);
-    setMessage(template.body);
-  }, [selectedEmailType]);
+    if (!senderName.trim() || !senderEmail.trim()) {
+      setSendFeedback({
+        type: "error",
+        message: "Configure your sender name and email in Settings.",
+        showSettings: true,
+      });
+      return;
+    }
+
+    if (!appPassword.trim()) {
+      setSendFeedback({
+        type: "error",
+        message: "Enter your Gmail App Password in Settings to send emails.",
+        showSettings: true,
+      });
+      return;
+    }
+
+    if (!recipient.trim()) {
+      setSendFeedback({
+        type: "error",
+        message: "Enter the recipient's email address.",
+      });
+      return;
+    }
+
+    if (!subject.trim() || !message.trim()) {
+      setSendFeedback({
+        type: "error",
+        message: "Subject and message are required.",
+      });
+      return;
+    }
+
+    if (selectedEmailType === "attachment") {
+      setSendFeedback({
+        type: "error",
+        message: "This email requires an attachment. Attachment sending is not available yet.",
+      });
+      return;
+    }
+
+    setIsSending(true);
+
+    try {
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          recipient: recipient.trim(),
+          subject: subject.trim(),
+          message,
+          emailType: selectedEmailType,
+          senderName: senderName.trim(),
+          senderEmail: senderEmail.trim(),
+          appPassword,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Unable to send the email.");
+      }
+
+      setSendFeedback({
+        type: "success",
+        message: `Email accepted by the mail server. Recipient: ${recipient.trim()}`,
+      });
+    } catch (error) {
+      setSendFeedback({
+        type: "error",
+        message: error instanceof Error
+          ? error.message
+          : "Unable to send the email. Please try again.",
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   const selectedType = emailTypes.find((type) => type.id === selectedEmailType) ?? emailTypes[0];
   const EmailIcon = selectedType.icon;
@@ -142,7 +235,7 @@ export const EmailWorkspace = ({
               name="subject"
               type="text"
               value={subject}
-              onChange={(event) => setSubject(event.target.value)}
+              onChange={(event) => onSubjectChange(event.target.value)}
               placeholder="Enter email subject"
               className="w-full py-2 text-sm outline-none placeholder:text-slate-300"
             />
@@ -152,7 +245,7 @@ export const EmailWorkspace = ({
             name="message"
             aria-label="Email message body"
             value={message}
-            onChange={(event) => setMessage(event.target.value)}
+            onChange={(event) => onMessageChange(event.target.value)}
             placeholder={
               selectedEmailType === "html"
                 ? "Edit your HTML email..."
@@ -164,10 +257,11 @@ export const EmailWorkspace = ({
           <div className="flex items-center border-t border-slate-100 p-4 md:px-6">
             <button
               type="button"
-              className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-2.5 text-sm font-semibold text-white 
-                cursor-pointer transition hover:bg-blue-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={handleSend}
+              disabled={isSending}
+              className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Send Email
+              {isSending ? "Sending..." : "Send Email"}
               <Send size={16} />
             </button>
             
@@ -179,6 +273,28 @@ export const EmailWorkspace = ({
               <Paperclip size={20} />
             </button>
           </div>
+          {sendFeedback && (
+            <div
+              role={sendFeedback.type === "error" ? "alert" : "status"}
+              className={`mx-4 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-sm md:mx-6 ${
+                sendFeedback.type === "success"
+                  ? "border-blue-100 bg-blue-50 text-blue-800"
+                  : "border-red-100 bg-red-50 text-red-700"
+              }`}
+            >
+              <p>{sendFeedback.message}</p>
+
+              {sendFeedback.showSettings && (
+                <button
+                  type="button"
+                  onClick={onOpenSettings}
+                  className="shrink-0 font-semibold underline underline-offset-2"
+                >
+                  Open Settings
+                </button>
+              )}
+            </div>
+          )}
         </div>
         
         <aside className="w-[280px] space-y-4">

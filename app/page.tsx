@@ -5,6 +5,7 @@ import { EmailWorkspace } from "@/components/EmailWorkspace";
 import { Sidebar, type SidebarSection } from "@/components/Sidebar";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import type { EmailTypeId } from "@/data/email-types";
+import { emailTemplates } from "@/data/email-templates";
 import {loadSenderProfile, saveSenderProfile} from "@/utils/sender-settings";
 
 export default function Home() {
@@ -13,6 +14,8 @@ export default function Home() {
   const [senderName, setSenderName] = useState("");
   const [senderEmail, setSenderEmail] = useState("");
   const [appPassword, setAppPassword] = useState("");
+  const [subject, setSubject] = useState(emailTemplates.text.subject);
+  const [message, setMessage] = useState(emailTemplates.text.body);
   
   useEffect(() => {
     const profile = loadSenderProfile();
@@ -42,6 +45,11 @@ export default function Home() {
         selectedEmailType={selectedEmailType}
         activeSection={activeSection}
         onSelectEmailType={(id) => {
+          if (id !== selectedEmailType) {
+            setSubject(emailTemplates[id].subject);
+            setMessage(emailTemplates[id].body);
+          }
+
           setSelectedEmailType(id);
           setActiveSection("email");
         }}
@@ -63,7 +71,12 @@ export default function Home() {
           selectedEmailType={selectedEmailType}
           senderName={senderName}
           senderEmail={senderEmail}
+          appPassword={appPassword}
           onOpenSettings={() => setActiveSection("settings")}
+          subject={subject}
+          onSubjectChange={setSubject}
+          message={message}
+          onMessageChange={setMessage}
         />
       )}
     </div>

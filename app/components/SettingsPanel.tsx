@@ -3,6 +3,7 @@
 import { SyntheticEvent, useState } from "react";
 import {
   AlertCircle,
+  CheckCircle2,
   Eye,
   EyeOff,
   KeyRound,
@@ -35,36 +36,17 @@ export const SettingsPanel = ({
   const [showAppPassword, setShowAppPassword] = useState(false);
   const [validationError, setValidationError] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
+  const [isTesting, setIsTesting] = useState(false);
+  const [connectionMessage, setConnectionMessage] = useState("");
+  const [connectionStatus, setConnectionStatus] = useState<"success" | "error" | "">("");
+  const [saveSucceeded, setSaveSucceeded] = useState(false);
 
   const clearFeedback = () => {
     setValidationError("");
     setStatusMessage("");
-  };
-
-  const validateSettings = () => {
-    if (!senderName.trim()) {
-      setValidationError("Please enter a sender name.");
-      return false;
-    }
-
-    if (!senderEmail.trim()) {
-      setValidationError("Please enter a sender email address.");
-      return false;
-    }
-
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailPattern.test(senderEmail.trim())) {
-      setValidationError("Please enter a valid sender email address.");
-      return false;
-    }
-
-    if (!appPassword.trim()) {
-      setValidationError("Please enter your Gmail App Password.");
-      return false;
-    }
-
-    return true;
+    setSaveSucceeded(false);
+    setConnectionMessage("");
+    setConnectionStatus("");
   };
 
   const handleSave = (event: SyntheticEvent<HTMLFormElement>) => {
@@ -92,15 +74,64 @@ export const SettingsPanel = ({
       return;
     }
 
+    setSaveSucceeded(true);
     setStatusMessage("Sender settings saved successfully.");
   };
 
-  const handleTestConnection = () => {
+  const handleTestConnection = async () => {
     clearFeedback();
 
-    if (!senderEmail.trim() || !appPassword.trim()) {
-      setValidationError("Enter your sender email and App Password first.");
+    if (!senderEmail.trim()) {
+      setValidationError("Please enter a sender email address.");
       return;
+    }
+
+    if (!appPassword.trim()) {
+      setValidationError("Please enter your Gmail App Password.");
+      return;
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailPattern.test(senderEmail.trim())) {
+      setValidationError("Please enter a valid sender email address.");
+      return;
+    }
+
+    setIsTesting(true);
+
+    try {
+      const response = await fetch("/api/test-smtp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          senderEmail: senderEmail.trim(),
+          appPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Unable to verify your Gmail connection.",
+        );
+      }
+
+      setConnectionMessage(data.message);
+      setConnectionStatus("success");
+    } catch (error) {
+      setConnectionMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to connect to Gmail. Please try again.",
+      );
+
+      setConnectionStatus("error");
+    } finally {
+      setIsTesting(false);
     }
   };
 
@@ -255,10 +286,32 @@ export const SettingsPanel = ({
             {statusMessage && (
               <p
                 role="status"
-                className="rounded-lg border border-blue-100 bg-blue-50 p-2.5 text-sm text-blue-800"
+                className={`rounded-lg border p-2.5 text-sm ${
+                  saveSucceeded
+                    ? "border-blue-100 bg-blue-50 text-blue-800"
+                    : "border-red-100 bg-red-50 text-red-700"
+                }`}
               >
                 {statusMessage}
               </p>
+            )}
+
+            {connectionMessage && (
+              <div
+                role="status"
+                className={`flex items-start gap-2 rounded-lg border p-2.5 text-sm ${
+                  connectionStatus === "success"
+                    ? "border-blue-100 bg-blue-50 text-blue-800"
+                    : "border-red-100 bg-red-50 text-red-700"
+                }`}
+              >
+                {connectionStatus === "success" ? (
+                  <CheckCircle2 size={17} className="mt-0.5 shrink-0" />
+                ) : (
+                  <AlertCircle size={17} className="mt-0.5 shrink-0" />
+                )}
+                <p>{connectionMessage}</p>
+              </div>
             )}
 
             <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
@@ -273,10 +326,11 @@ export const SettingsPanel = ({
               <button
                 type="button"
                 onClick={handleTestConnection}
-                className="flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 active:scale-[0.98]"
+                disabled={isTesting}
+                className="flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Plug size={16} />
-                Test Connection
+                {isTesting ? "Testing..." : "Test Connection"}
               </button>
             </div>
           </form>
