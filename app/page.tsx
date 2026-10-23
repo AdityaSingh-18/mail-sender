@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { EmailWorkspace } from "@/components/EmailWorkspace";
 import { Sidebar, type SidebarSection } from "@/components/Sidebar";
+import { SettingsPanel } from "@/components/SettingsPanel";
 import type { EmailTypeId } from "@/data/email-types";
 
 export default function Home() {
@@ -20,7 +21,7 @@ export default function Home() {
         }}
         onSelectSection={setActiveSection}
       />
-      <EmailWorkspace selectedEmailType={selectedEmailType} />
+      {activeSection === "settings" ? <SettingsPanel /> : <EmailWorkspace selectedEmailType={selectedEmailType} />}
     </div>
   );
 }
