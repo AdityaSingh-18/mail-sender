@@ -1,68 +1,21 @@
-import {
-  BellRing,
-  CalendarCheck2,
-  CodeXml,
-  History,
-  KeyRound,
-  Mail,
-  Paperclip,
-  Settings,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
+import { History, Mail, Settings } from "lucide-react";
+import { emailTypes, type EmailTypeId } from "@/data/email-types";
 
-const EmailTypes = [
-  {
-    id: "text",
-    label: "Text Email",
-    description: "Simple subject and message email",
-    icon: Mail,
-  },
-  {
-    id: "html",
-    label: "HTML Email",
-    description: "Styled and branded email layouts",
-    icon: CodeXml,
-  },
-  {
-    id: "otp",
-    label: "OTP Verification",
-    description: "Secure one-time verification codes",
-    icon: ShieldCheck,
-  },
-  {
-    id: "reset",
-    label: "Password Reset",
-    description: "Secure password recovery emails",
-    icon: KeyRound,
-  },
-  {
-    id: "booking",
-    label: "Booking Confirmation",
-    description: "Reservation and booking details",
-    icon: CalendarCheck2,
-  },
-  {
-    id: "attachment",
-    label: "Email with Attachment",
-    description: "Send files, PDFs and documents",
-    icon: Paperclip,
-  },
-  {
-    id: "welcome",
-    label: "Welcome Email",
-    description: "Account and onboarding messages",
-    icon: Sparkles,
-  },
-  {
-    id: "notification",
-    label: "Notification Email",
-    description: "Updates, alerts and status messages",
-    icon: BellRing,
-  },
-];
+export type SidebarSection = "email" | "history" | "settings";
 
-export const Sidebar = () => {
+type SidebarProps = {
+  selectedEmailType: EmailTypeId;
+  activeSection: SidebarSection;
+  onSelectEmailType: (id: EmailTypeId) => void;
+  onSelectSection: (section: "history" | "settings") => void;
+};
+
+export const Sidebar = ({
+  selectedEmailType,
+  activeSection,
+  onSelectEmailType,
+  onSelectSection,
+}: SidebarProps) => {
   return (
     <div className="w-[280px] px-3 border-r border-slate-200 bg-white">
       <div className="flex items-center gap-1 px-3 py-2 border-b border-slate-200">
@@ -83,15 +36,20 @@ export const Sidebar = () => {
         </div>
 
         <div className="max-h-[260px] overflow-y-auto pb-2 space-y-1 sidebar-scroll">
-          {EmailTypes.map((mail) => {
+          {emailTypes.map((mail) => {
             const Icon = mail.icon;
+            const isSelected = activeSection === "email" && selectedEmailType === mail.id;
+
             return (
               <button
                 key={mail.id}
                 type="button"
-                className="w-full flex items-center gap-3 text-slate-600 hover:bg-slate-50 rounded-xl p-3 transition text-left cursor-pointer"
+                aria-pressed={isSelected}
+                onClick={() => onSelectEmailType(mail.id)}
+                className={`w-full flex items-center gap-3 rounded-xl p-3 transition text-left cursor-pointer 
+                  ${isSelected ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}
               >
-                <div className="p-2 bg-slate-100 rounded-lg">
+                <div className={`p-2 rounded-lg ${isSelected ? "bg-blue-100" : "bg-slate-100"}`}>
                   <Icon size={20} />
                 </div>
                 <div className="min-w-0">
@@ -107,17 +65,29 @@ export const Sidebar = () => {
           })}
         </div>
 
-        <button className="w-full flex items-center gap-3 text-slate-600 hover:bg-slate-50 rounded-xl my-1 px-3 py-2 transition text-left cursor-pointer">
-          <div className="p-2 bg-slate-100 rounded-lg">
+        <button
+          type="button"
+          aria-pressed={activeSection === "history"}
+          onClick={() => onSelectSection("history")}
+          className={`w-full flex items-center gap-3 rounded-xl my-1 px-3 py-2 transition text-left cursor-pointer 
+            ${activeSection === "history" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}
+        >
+          <div className={`p-2 rounded-lg ${activeSection === "history" ? "bg-blue-100 text-blue-600" : "bg-slate-100"}`}>
             <History size={20} />
           </div>
           <p className="text-sm font-medium">
             Sending History
           </p>
         </button>
-        
-        <button className="w-full flex items-center gap-3 text-slate-600 hover:bg-slate-50 rounded-xl px-3 py-2 transition text-left cursor-pointer">
-          <div className="p-2 bg-slate-100 rounded-lg">
+
+        <button
+          type="button"
+          aria-pressed={activeSection === "settings"}
+          onClick={() => onSelectSection("settings")}
+          className={`w-full flex items-center gap-3 rounded-xl px-3 py-2 transition text-left cursor-pointer 
+            ${activeSection === "settings" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}
+        >
+          <div className={`p-2 rounded-lg ${activeSection === "settings" ? "bg-blue-100 text-blue-600" : "bg-slate-100"}`}>
             <Settings size={20} />
           </div>
           <p className="text-sm font-medium">

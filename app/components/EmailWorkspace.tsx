@@ -1,10 +1,11 @@
 import { 
-  Mail,
   Paperclip,
   Send, 
   Sparkles
 } 
 from "lucide-react";
+
+import { emailTypes, type EmailTypeId } from "@/data/email-types";
 
 const steps = [
   {
@@ -29,7 +30,16 @@ const steps = [
   },
 ];
 
-export const EmailWorkspace = () => {
+type EmailWorkspaceProps = {
+  selectedEmailType: EmailTypeId;
+};
+
+export const EmailWorkspace = ({
+  selectedEmailType,
+}: EmailWorkspaceProps) => {
+  const selectedType = emailTypes.find((type) => type.id === selectedEmailType) ?? emailTypes[0];
+  const EmailIcon = selectedType.icon;
+  
   return (
     <section className="flex-1 p-4 md:px-6">
       <div className="mb-3">
@@ -37,7 +47,7 @@ export const EmailWorkspace = () => {
           Send Mails
         </h2>
         <p className="mt-1 text-sm text-slate-500">
-          Create different email types and understand how they are sent through Nodemailer.
+          Compose and send emails for verification, bookings, notifications, and more.
         </p>
       </div>
       
@@ -45,14 +55,15 @@ export const EmailWorkspace = () => {
         <div className="flex-1 border border-slate-200 bg-white shadow-sm rounded-2xl">
           <div className="flex items-center gap-3 p-4 md:px-6 border-b border-slate-100 bg-slate-50/70">
             <div className="p-2 bg-blue-100 text-blue-500 rounded-lg">
-              <Mail size={22} />
+              <EmailIcon size={22} />
             </div>
+            
             <div>
               <h3 className="text-[15px] font-semibold text-slate-700">
-                Text Email
+                {selectedType.label}
               </h3>
               <p className="text-xs text-slate-400">
-                Simple subject and message email
+                {selectedType.description}
               </p>
             </div>
           </div>
@@ -78,7 +89,7 @@ export const EmailWorkspace = () => {
               Send Email
               <Send size={16} />
             </button>
-
+            
             <button
               type="button"
               title="Attachments will be added later"
@@ -88,7 +99,7 @@ export const EmailWorkspace = () => {
             </button>
           </div>
         </div>
-
+        
         <aside className="w-[280px] space-y-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
@@ -96,13 +107,13 @@ export const EmailWorkspace = () => {
                 <p className="text-[13px] font-semibold uppercase tracking-wide text-slate-500">
                   Delivery Flow
                 </p>
-
+                
                 <p className="mt-1 text-xs leading-4 text-slate-400">
                   Follow the message from compose to inbox
                 </p>
               </div>
             </div>
-
+            
             <div className="relative mt-4 space-y-4">
               {steps.map((step) => (
                 <div key={step.title} className="relative flex gap-3">
@@ -110,7 +121,7 @@ export const EmailWorkspace = () => {
                     rounded-full bg-slate-200 text-xs font-semibold text-slate-600">
                     {step.number}
                   </div>
-
+                  
                   <div>
                     <p className="text-sm font-medium text-slate-700">
                       {step.title}
