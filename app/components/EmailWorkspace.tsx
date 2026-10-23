@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { emailTypes, type EmailTypeId } from "@/data/email-types";
 import dynamic from "next/dynamic";
+import toast from "react-hot-toast";
 
 import { 
   Paperclip,
@@ -60,12 +61,6 @@ type EmailWorkspaceProps = {
   onMessageChange: (value: string) => void;
 };
 
-type SendFeedback = {
-  type: "success" | "error";
-  message: string;
-  showSettings?: boolean;
-};
-
 export const EmailWorkspace = ({
   selectedEmailType,
   senderName,
@@ -79,55 +74,61 @@ export const EmailWorkspace = ({
 }: EmailWorkspaceProps) => {
   const [recipient, setRecipient] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [sendFeedback, setSendFeedback] = useState<SendFeedback | null>(null);
+
+  const showSettingsToast = (message: string) => {
+    toast.custom(
+      (t) => (
+        <div className="flex max-w-md items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-700 shadow-lg">
+          <p className="flex-1 text-sm">{message}</p>
+
+          <button
+            type="button"
+            onClick={() => {
+              toast.dismiss(t.id);
+              onOpenSettings();
+            }}
+            className="shrink-0 text-sm font-semibold text-blue-600 hover:text-blue-700"
+          >
+            Open Settings
+          </button>
+        </div>
+      ),
+      {
+        duration: 6000,
+        position: "top-right",
+      },
+    );
+  };
 
   const handleSend = async () => {
-    setSendFeedback(null);
-
     if (!senderName.trim() || !senderEmail.trim()) {
-      setSendFeedback({
-        type: "error",
-        message: "Configure your sender name and email in Settings.",
-        showSettings: true,
-      });
+      showSettingsToast("Configure your sender name and email in Settings.");
       return;
     }
 
     if (!appPassword.trim()) {
-      setSendFeedback({
-        type: "error",
-        message: "Enter your Gmail App Password in Settings to send emails.",
-        showSettings: true,
-      });
+      showSettingsToast("Enter your Gmail App Password in Settings to send emails.");
       return;
     }
 
     if (!recipient.trim()) {
-      setSendFeedback({
-        type: "error",
-        message: "Enter the recipient's email address.",
-      });
+      toast.error("Enter the recipient's email address.");
       return;
     }
 
     if (!subject.trim() || !message.trim()) {
-      setSendFeedback({
-        type: "error",
-        message: "Subject and message are required.",
-      });
+      toast.error("Subject and message are required.");
       return;
     }
 
     if (selectedEmailType === "attachment") {
-      setSendFeedback({
-        type: "error",
-        message: "This email requires an attachment. Attachment sending is not available yet.",
-      });
+      toast.error("Attachment sending is not available yet.");
       return;
     }
 
     setIsSending(true);
 
+    const toastId = toast.loading("Sending email...");
     try {
       const response = await fetch("/api/send-mail", {
         method: "POST",
@@ -147,20 +148,18 @@ export const EmailWorkspace = ({
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || "Unable to send the email.");
+        throw new Error(
+          data.message || "Unable to send the email.",
+        );
       }
 
-      setSendFeedback({
-        type: "success",
-        message: `Email accepted by the mail server. Recipient: ${recipient.trim()}`,
-      });
+      toast.success(`Email accepted by the mail server. Recipient: ${recipient.trim()}`, { id: toastId });
     } catch (error) {
-      setSendFeedback({
-        type: "error",
-        message: error instanceof Error
-          ? error.message
-          : "Unable to send the email. Please try again.",
-      });
+      toast.error(error instanceof Error
+        ? error.message
+        : "Unable to send the email. Please try again.",
+        { id: toastId },
+      );
     } finally {
       setIsSending(false);
     }
@@ -291,28 +290,6 @@ export const EmailWorkspace = ({
               <Paperclip size={20} />
             </button>
           </div>
-          {sendFeedback && (
-            <div
-              role={sendFeedback.type === "error" ? "alert" : "status"}
-              className={`mx-4 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-sm md:mx-6 ${
-                sendFeedback.type === "success"
-                  ? "border-blue-100 bg-blue-50 text-blue-800"
-                  : "border-red-100 bg-red-50 text-red-700"
-              }`}
-            >
-              <p>{sendFeedback.message}</p>
-
-              {sendFeedback.showSettings && (
-                <button
-                  type="button"
-                  onClick={onOpenSettings}
-                  className="shrink-0 font-semibold underline underline-offset-2"
-                >
-                  Open Settings
-                </button>
-              )}
-            </div>
-          )}
         </div>
         
         <aside className="w-[280px] space-y-4">

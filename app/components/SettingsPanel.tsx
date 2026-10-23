@@ -1,9 +1,9 @@
 "use client";
 
 import { SyntheticEvent, useState } from "react";
+import toast from "react-hot-toast";
+
 import {
-  AlertCircle,
-  CheckCircle2,
   Eye,
   EyeOff,
   KeyRound,
@@ -34,72 +34,55 @@ export const SettingsPanel = ({
   onSaveSettings,
 }: SettingsPanelProps) => {
   const [showAppPassword, setShowAppPassword] = useState(false);
-  const [validationError, setValidationError] = useState("");
-  const [statusMessage, setStatusMessage] = useState("");
   const [isTesting, setIsTesting] = useState(false);
-  const [connectionMessage, setConnectionMessage] = useState("");
-  const [connectionStatus, setConnectionStatus] = useState<"success" | "error" | "">("");
-  const [saveSucceeded, setSaveSucceeded] = useState(false);
-
-  const clearFeedback = () => {
-    setValidationError("");
-    setStatusMessage("");
-    setSaveSucceeded(false);
-    setConnectionMessage("");
-    setConnectionStatus("");
-  };
-
+  
   const handleSave = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
-    clearFeedback();
 
     if (!senderName.trim()) {
-      setValidationError("Please enter a sender name.");
+      toast.error("Please enter a sender name.");
       return;
     }
 
     if (!senderEmail.trim()) {
-      setValidationError("Please enter a sender email address.");
+      toast.error("Please enter a sender email address.");
       return;
     }
 
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(senderEmail.trim())) {
-      setValidationError("Please enter a valid sender email address.");
+      toast.error("Please enter a valid sender email address.");
       return;
     }
 
     if (!onSaveSettings()) {
-      setStatusMessage("Unable to save settings in this browser.");
+      toast.error("Unable to save settings in this browser.");
       return;
     }
 
-    setSaveSucceeded(true);
-    setStatusMessage("Sender settings saved successfully.");
+    toast.success("Sender settings saved successfully.");
   };
 
   const handleTestConnection = async () => {
-    clearFeedback();
-
     if (!senderEmail.trim()) {
-      setValidationError("Please enter a sender email address.");
+      toast.error("Please enter a sender email address.");
       return;
     }
 
     if (!appPassword.trim()) {
-      setValidationError("Please enter your Gmail App Password.");
+      toast.error("Please enter your Gmail App Password.");
       return;
     }
 
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
     if (!emailPattern.test(senderEmail.trim())) {
-      setValidationError("Please enter a valid sender email address.");
+      toast.error("Please enter a valid sender email address.");
       return;
     }
 
     setIsTesting(true);
 
+    const toastId = toast.loading("Testing Gmail connection...");
     try {
       const response = await fetch("/api/test-smtp", {
         method: "POST",
@@ -113,23 +96,17 @@ export const SettingsPanel = ({
       });
 
       const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(
-          data.message || "Unable to verify your Gmail connection.",
-        );
+        throw new Error(data.message || "Unable to verify your Gmail connection.");
       }
 
-      setConnectionMessage(data.message);
-      setConnectionStatus("success");
+      toast.success(data.message || "Gmail connection verified successfully.", { id: toastId });
     } catch (error) {
-      setConnectionMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to connect to Gmail. Please try again.",
+      toast.error(error instanceof Error
+        ? error.message
+        : "Unable to connect to Gmail. Please try again.",
+        { id: toastId },
       );
-
-      setConnectionStatus("error");
     } finally {
       setIsTesting(false);
     }
@@ -193,10 +170,7 @@ export const SettingsPanel = ({
                   type="text"
                   autoComplete="name"
                   value={senderName}
-                  onChange={(event) => {
-                    onSenderNameChange(event.target.value);
-                    clearFeedback();
-                  }}
+                  onChange={(event) => onSenderNameChange(event.target.value)}
                   placeholder="Your name or business name"
                   className="w-full py-2.5 text-sm text-slate-700 outline-none placeholder:text-slate-300"
                 />
@@ -220,10 +194,7 @@ export const SettingsPanel = ({
                   type="email"
                   autoComplete="email"
                   value={senderEmail}
-                  onChange={(event) => {
-                    onSenderEmailChange(event.target.value);
-                    clearFeedback();
-                  }}
+                  onChange={(event) => onSenderEmailChange(event.target.value)}
                   placeholder="your-email@gmail.com"
                   className="w-full py-2.5 text-sm text-slate-700 outline-none placeholder:text-slate-300"
                 />
@@ -247,10 +218,7 @@ export const SettingsPanel = ({
                   type={showAppPassword ? "text" : "password"}
                   autoComplete="new-password"
                   value={appPassword}
-                  onChange={(event) => {
-                    onAppPasswordChange(event.target.value);
-                    clearFeedback();
-                  }}
+                  onChange={(event) => onAppPasswordChange(event.target.value)}
                   placeholder="Enter your App Password"
                   className="w-full py-2.5 text-sm text-slate-700 outline-none placeholder:text-slate-300"
                 />
@@ -272,47 +240,6 @@ export const SettingsPanel = ({
                 Use a Google App Password instead of your regular password.
               </p>
             </div>
-
-            {validationError && (
-              <div
-                role="alert"
-                className="flex items-start gap-2 rounded-lg border border-red-100 bg-red-50 p-2.5 text-sm text-red-700"
-              >
-                <AlertCircle size={17} className="mt-0.5 shrink-0" />
-                <p>{validationError}</p>
-              </div>
-            )}
-
-            {statusMessage && (
-              <p
-                role="status"
-                className={`rounded-lg border p-2.5 text-sm ${
-                  saveSucceeded
-                    ? "border-blue-100 bg-blue-50 text-blue-800"
-                    : "border-red-100 bg-red-50 text-red-700"
-                }`}
-              >
-                {statusMessage}
-              </p>
-            )}
-
-            {connectionMessage && (
-              <div
-                role="status"
-                className={`flex items-start gap-2 rounded-lg border p-2.5 text-sm ${
-                  connectionStatus === "success"
-                    ? "border-blue-100 bg-blue-50 text-blue-800"
-                    : "border-red-100 bg-red-50 text-red-700"
-                }`}
-              >
-                {connectionStatus === "success" ? (
-                  <CheckCircle2 size={17} className="mt-0.5 shrink-0" />
-                ) : (
-                  <AlertCircle size={17} className="mt-0.5 shrink-0" />
-                )}
-                <p>{connectionMessage}</p>
-              </div>
-            )}
 
             <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
               <button
