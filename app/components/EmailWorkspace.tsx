@@ -2,12 +2,28 @@
 
 import { useState } from "react";
 import { emailTypes, type EmailTypeId } from "@/data/email-types";
+import dynamic from "next/dynamic";
 
 import { 
   Paperclip,
   Send,
   Sparkles
 } from "lucide-react";
+
+const HtmlEmailEditor = dynamic(
+  () =>
+    import("@/components/HtmlEmailEditor").then(
+      (module) => module.HtmlEmailEditor,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="p-4 text-sm text-slate-400">
+        Loading HTML editor...
+      </div>
+    ),
+  },
+);
 
 const steps = [
   {
@@ -113,7 +129,7 @@ export const EmailWorkspace = ({
     setIsSending(true);
 
     try {
-      const response = await fetch("/api/send-email", {
+      const response = await fetch("/api/send-mail", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -240,20 +256,22 @@ export const EmailWorkspace = ({
               className="w-full py-2 text-sm outline-none placeholder:text-slate-300"
             />
           </div>
-          <textarea
-            id="message"
-            name="message"
-            aria-label="Email message body"
-            value={message}
-            onChange={(event) => onMessageChange(event.target.value)}
-            placeholder={
-              selectedEmailType === "html"
-                ? "Edit your HTML email..."
-                : "Write your email..."
-            }
-            className={`min-h-60 w-full resize-none p-4 md:px-6 text-[15px] leading-6 text-slate-700 outline-none 
-              placeholder:text-slate-300 sidebar-scroll ${selectedEmailType === "html" ? "font-mono" : ""}`}
-          />
+          {selectedEmailType === "html" ? (
+            <HtmlEmailEditor
+              value={message}
+              onChange={onMessageChange}
+            />
+          ) : (
+            <textarea
+              id="message"
+              name="message"
+              aria-label="Email message body"
+              value={message}
+              onChange={(event) => onMessageChange(event.target.value)}
+              placeholder="Write your email..."
+              className="min-h-60 w-full resize-none p-4 md:px-6 text-[15px] leading-6 text-slate-700 outline-none placeholder:text-slate-300 sidebar-scroll"
+            />
+          )}
           <div className="flex items-center border-t border-slate-100 p-4 md:px-6">
             <button
               type="button"

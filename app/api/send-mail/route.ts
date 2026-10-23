@@ -1,5 +1,6 @@
 import { createGmailTransport } from "@/lib/gmail-transporter";
 import { isSameOriginRequest } from "@/lib/request-security";
+import { sanitizeEmailHtml } from "@/lib/sanitize-email-html";
 
 export const runtime = "nodejs";
 
@@ -26,6 +27,10 @@ function htmlToText(html: string): string {
   return html
     .replace(/<style[\s\S]*?<\/style>/gi, "")
     .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(
+      /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi,
+      "$2 ($1)",
+    )
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/(p|div|h1|h2|h3|li)>/gi, "\n")
     .replace(/<[^>]*>/g, " ")
@@ -93,14 +98,22 @@ export async function POST(request: Request) {
     );
   }
 
+  const sanitizedHtml = emailType === "html" ? sanitizeEmailHtml(message) : "";
+  if (emailType === "html" && !sanitizedHtml.trim()) {
+    return Response.json(
+      { message: "Please provide valid HTML email content." },
+      { status: 400 },
+    );
+  }
+
   const transporter = createGmailTransport(senderEmail, appPassword);
   try {
     const content = emailType === "html"
-      ? {
-          html: message,
-          text: htmlToText(message),
-        }
-      : { text: message };
+    ? {
+        html: sanitizedHtml,
+        text: htmlToText(sanitizedHtml),
+      }
+    : { text: message };
 
     const info = await transporter.sendMail({
       from: {
