@@ -1,11 +1,14 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { emailTypes, type EmailTypeId } from "@/data/email-types";
+import { emailTemplates } from "@/data/email-templates";
+
 import { 
   Paperclip,
-  Send, 
+  Send,
   Sparkles
-} 
-from "lucide-react";
-
-import { emailTypes, type EmailTypeId } from "@/data/email-types";
+} from "lucide-react";
 
 const steps = [
   {
@@ -37,6 +40,17 @@ type EmailWorkspaceProps = {
 export const EmailWorkspace = ({
   selectedEmailType,
 }: EmailWorkspaceProps) => {
+  const [recipient, setRecipient] = useState("");
+  const [subject, setSubject] = useState(emailTemplates.text.subject);
+  const [message, setMessage] = useState(emailTemplates.text.body);
+
+  useEffect(() => {
+    const template = emailTemplates[selectedEmailType];
+
+    setSubject(template.subject);
+    setMessage(template.body);
+  }, [selectedEmailType]);
+
   const selectedType = emailTypes.find((type) => type.id === selectedEmailType) ?? emailTypes[0];
   const EmailIcon = selectedType.icon;
   
@@ -68,18 +82,56 @@ export const EmailWorkspace = ({
             </div>
           </div>
           <div className="flex items-center border border-slate-100 px-4 md:px-6">
-            <label className="w-[80px] text-sm text-slate-500 py-2">
+            <label
+              htmlFor="recipient"
+              className="w-[80px] text-sm text-slate-500 py-2"
+            >
               To
             </label>
-            <input className="w-full py-2 text-sm outline-none placeholder:text-slate-300" />
+
+            <input
+              id="recipient"
+              name="recipient"
+              type="email"
+              value={recipient}
+              onChange={(event) => setRecipient(event.target.value)}
+              placeholder="recipient@gmail.com"
+              className="w-full py-2 text-sm outline-none placeholder:text-slate-300"
+            />
           </div>
           <div className="flex items-center border border-slate-100 px-4 md:px-6">
-            <label className="w-[80px] text-sm text-slate-500 py-2">
+            <label
+              htmlFor="subject"
+              className="w-[80px] text-sm text-slate-500 py-2"
+            >
               Subject
             </label>
-            <input className="w-full py-2 text-sm outline-none placeholder:text-slate-300" />
+
+            <input
+              id="subject"
+              name="subject"
+              type="text"
+              value={subject}
+              onChange={(event) => setSubject(event.target.value)}
+              placeholder="Enter email subject"
+              className="w-full py-2 text-sm outline-none placeholder:text-slate-300"
+            />
           </div>
-          <textarea className="min-h-[260px] w-full resize-none p-4 md:px-6 text-[15px] leading-6 text-slate-700 outline-none placeholder:text-slate-300" />
+          <textarea
+            id="message"
+            name="message"
+            aria-label="Email message body"
+            value={message}
+            onChange={(event) => setMessage(event.target.value)}
+            placeholder={
+              selectedEmailType === "html"
+                ? "Edit your HTML email..."
+                : "Write your email..."
+            }
+            className={`min-h-[260px] w-full resize-none p-4 md:px-6 text-[15px] leading-6 text-slate-700 outline-none placeholder:text-slate-300 ${
+              selectedEmailType === "html" ? "font-mono" : ""
+            }`}
+          />
           <div className="flex items-center border-t border-slate-100 p-4 md:px-6">
             <button
               type="button"
